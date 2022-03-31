@@ -1,27 +1,29 @@
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
-from muse_gui.backend.resources.datastore.base import BaseDatastore
-from muse_gui.backend.resources.datastore.exceptions import DependentNotFound, KeyNotFound
 from muse_gui.backend.data.agent import Agent
+from muse_gui.backend.resources.datastore.base import BaseDatastore
+from muse_gui.backend.resources.datastore.exceptions import (
+    DependentNotFound,
+    KeyNotFound,
+)
 
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from . import Datastore
 
 
 class AgentDatastore(BaseDatastore[Agent]):
     def __init__(self, parent: "Datastore", agents: List[Agent] = []) -> None:
-        super().__init__(parent, 'name', data = agents)
+        super().__init__(parent, "name", data=agents)
 
-    def back_dependents(self, model: Agent) -> Dict[str,List[str]]:
+    def back_dependents(self, model: Agent) -> Dict[str, List[str]]:
         regions = []
-        for data in (model.new + model.retrofit):
+        for region, data in model.new.items():
             try:
-                region = self._parent.region.read(data.region)
+                region_model = self._parent.region.read(region)
             except KeyNotFound:
-                raise DependentNotFound(model, data.region, self._parent.region)
-            regions.append(region.name)
-        
+                raise DependentNotFound(model, region, self._parent.region)
+            regions.append(region_model.name)
+
         sectors = []
         for sector in model.sectors:
             try:
@@ -29,10 +31,7 @@ class AgentDatastore(BaseDatastore[Agent]):
             except KeyNotFound:
                 raise DependentNotFound(model, sector, self._parent.sector)
             sectors.append(sector)
-        return {
-            'region': regions,
-            'sector': sectors
-        }
+        return {"region": regions, "sector": sectors}
 
     def forward_dependents(self, model: Agent) -> Dict[str, List[str]]:
         processes = []
@@ -41,6 +40,4 @@ class AgentDatastore(BaseDatastore[Agent]):
                 for agent in technodata.agents:
                     if agent.agent_name == model.name:
                         processes.append(key)
-        return {
-            'process': processes
-        }
+        return {"process": processes}
