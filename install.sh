@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e
 poetry install
-poetry run python -m pip install git+ssh://git@github.com/SGIModel/MUSE_ICL.git
+poetry run python -m pip install git+ssh://git@github.com/SGIModel/MUSE_OS.git
